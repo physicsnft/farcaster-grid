@@ -1,0 +1,18 @@
+{
+  "accountAssociation": {
+    "header": "eyJmaWQiOjMxMTQ0NiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDQxZmZiODQxYUViMDI1MzZlQzlGNWRCQThBQTg4ZWQwN0JBNjQ5MmUifQ",
+    "payload": "eyJkb21haW4iOiJyYW5kb20td2Fsay1zYWJsZS52ZXJjZWwuYXBwIn0",
+    "signature": "MHhhMGEyMDFiOGVjNDNkOTk5OTFmM2YyNzkyMmExZGY0MjhhYWVhMWEzOWY0YjBiODQ2NGRjY2YzMzVjODIxMTM1NWJkNWZkZjAyZjRjODUyOWMzYjRlNmE2MmVjY2E3MDU3N2RlZTUyNjk4ZDY3NjNlMzdkNjhiZGY4OTg0NmU0NjFi"
+  },
+  "frame": {
+    "version": "1",
+    "name": "G R I D",
+    "iconUrl": "https://random-walk-sable.vercel.app/grid-icon.png",
+    "homeUrl": "https://random-walk-sable.vercel.app",
+    "imageUrl": "https://random-walk-sable.vercel.app/grid-image.png",
+    "buttonTitle": "Enter the G R I D",
+    "splashImageUrl": "https://random-walk-sable.vercel.app/grid-splash.png",
+    "splashBackgroundColor": "#ffffff",
+    "webhookUrl": "https://random-walk-sable.vercel.app/api/webhook"
+  }
+}
