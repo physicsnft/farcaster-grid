@@ -1,6 +1,13 @@
-import React, { useRef, useEffect, useState, useImperativeHandle, forwardRef } from "react";
+import {
+  useRef,
+  useEffect,
+  useState,
+  useImperativeHandle,
+  forwardRef,
+  ForwardRefRenderFunction,
+} from "react";
 
-const gradients = {
+const gradients: Record<string, string[]> = {
   neon: ["#00ffe5", "#ff00ff", "#ffff00", "#00ff00"],
   sunset: ["#ff7e5f", "#feb47b", "#ff6e7f", "#bfe9ff"],
   cyberpunk: ["#ff00c8", "#00f0ff", "#faff00", "#ff6f00"],
@@ -14,18 +21,18 @@ const tintOptions = [
 
 const backgroundOptions = ["#0d0221", "#ffffff"];
 
-function interpolateColor(gradient, ratio) {
+function interpolateColor(gradient: string[], ratio: number): string {
   const n = gradient.length - 1;
   const scaled = ratio * n;
   const i = Math.floor(scaled);
   const t = scaled - i;
 
-  const hexToRgb = (hex) => {
+  const hexToRgb = (hex: string): [number, number, number] => {
     const bigint = parseInt(hex.slice(1), 16);
     return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255];
   };
 
-  const rgbToHex = (r, g, b) =>
+  const rgbToHex = (r: number, g: number, b: number): string =>
     `#${[r, g, b].map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
 
   const [r1, g1, b1] = hexToRgb(gradient[i]);
@@ -38,24 +45,38 @@ function interpolateColor(gradient, ratio) {
   return rgbToHex(r, g, b);
 }
 
-const PachinkoCanvas = forwardRef((props, ref) => {
-  const canvasRef = useRef(null);
-  const [visiblePaths, setVisiblePaths] = useState([]);
-  const [selectedGradient, setSelectedGradient] = useState(gradients.neon);
-  const [tints, setTints] = useState(tintOptions[0]);
-  const [bgColor, setBgColor] = useState(backgroundOptions[0]);
+type Point = {
+  x: number;
+  y: number;
+  direction: number;
+};
+
+type PachinkoCanvasProps = {
+  onAnimationStart?: () => void;
+  onAnimationEnd?: () => void;
+};
+
+const PachinkoCanvas: ForwardRefRenderFunction<any, PachinkoCanvasProps> = (
+  { onAnimationStart, onAnimationEnd },
+  ref
+) => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [visiblePaths, setVisiblePaths] = useState<Point[][]>([]);
+  const [selectedGradient, setSelectedGradient] = useState<string[]>([]);
+  const [tints, setTints] = useState<{ left: string; right: string }>(tintOptions[0]);
+  const [bgColor, setBgColor] = useState<string>(backgroundOptions[0]);
 
   const numRows = 40;
-  const numBalls = 200;
+  const numBalls = 100;
   const stepSize = 30;
   const totalCols = 40;
   const visibleCols = 30;
   const canvasWidth = 900;
   const canvasHeight = 1200;
-  const startColRange = [-totalCols / 2, totalCols / 2];
+  const startColRange: [number, number] = [-totalCols / 2, totalCols / 2];
 
-  const simulateBall = (startX) => {
-    const path = [{ x: startX, y: 0, direction: 0 }];
+  const simulateBall = (startX: number): Point[] => {
+    const path: Point[] = [{ x: startX, y: 0, direction: 0 }];
     for (let row = 1; row <= numRows; row++) {
       const last = path[path.length - 1];
       const direction = Math.random() < 0.5 ? -1 : 1;
@@ -67,11 +88,11 @@ const PachinkoCanvas = forwardRef((props, ref) => {
   };
 
   const regenerate = () => {
-    // Notify parent that animation is starting
-    props.onAnimationStart?.();
-    
-    const gradientNames = Object.keys(gradients);
-    const randomGradient = gradients[gradientNames[Math.floor(Math.random() * gradientNames.length)]];
+    if (onAnimationStart) onAnimationStart();
+
+    const gradientKeys = Object.keys(gradients);
+    const randomGradient =
+      gradients[gradientKeys[Math.floor(Math.random() * gradientKeys.length)]];
     const randomTints = tintOptions[Math.floor(Math.random() * tintOptions.length)];
     const randomBackground = backgroundOptions[Math.floor(Math.random() * backgroundOptions.length)];
 
@@ -81,13 +102,19 @@ const PachinkoCanvas = forwardRef((props, ref) => {
 
     const allPaths = Array.from({ length: numBalls }, () => {
       const startX =
-        (Math.floor(Math.random() * (startColRange[1] - startColRange[0] + 1)) + startColRange[0]) * stepSize;
+        (Math.floor(Math.random() * (startColRange[1] - startColRange[0] + 1)) +
+          startColRange[0]) *
+        stepSize;
       return simulateBall(startX);
     });
 
     const centerOffset = ((totalCols - visibleCols) / 2) * stepSize;
     const paths = allPaths.map((path) =>
-      path.map((p) => ({ x: p.x - centerOffset + canvasWidth / 2, y: p.y, direction: p.direction }))
+      path.map((p) => ({
+        x: p.x - centerOffset + canvasWidth / 2,
+        y: p.y,
+        direction: p.direction,
+      }))
     );
 
     let index = 0;
@@ -100,11 +127,11 @@ const PachinkoCanvas = forwardRef((props, ref) => {
           return next;
         } else {
           clearInterval(interval);
-          props.onAnimationEnd?.();  // Notify parent when done
+          if (onAnimationEnd) onAnimationEnd();
           return prev;
         }
       });
-    }, 200);
+    }, 100);
   };
 
   useEffect(() => {
@@ -113,7 +140,11 @@ const PachinkoCanvas = forwardRef((props, ref) => {
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+
     const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
     ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     visiblePaths.forEach((path) => {
@@ -123,7 +154,6 @@ const PachinkoCanvas = forwardRef((props, ref) => {
         const avgY = (p1.y + p2.y) / 2;
         const baseRatio = avgY / canvasHeight;
         const baseColor = interpolateColor(selectedGradient, baseRatio);
-
         const tint = p2.direction === -1 ? tints.left : tints.right;
 
         ctx.beginPath();
@@ -165,6 +195,6 @@ const PachinkoCanvas = forwardRef((props, ref) => {
         }}
     />
   );
-});
+};
 
-export default PachinkoCanvas;
+export default forwardRef(PachinkoCanvas);
