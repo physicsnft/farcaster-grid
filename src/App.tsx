@@ -5,15 +5,21 @@ import { Button } from "./components/Button";
 import { AnimatedBorder } from "./components/AnimatedBorder";
 import PachinkoCanvas from "./components/PachinkoCanvas";
 
+// 👇 Add this interface
+type PachinkoCanvasHandle = {
+  regenerate: () => void;
+  getVisibleCanvasWidth?: () => number;
+};
+
 const App = () => {
   const [hasMintedCurrentArtwork, setHasMintedCurrentArtwork] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const canvasRef = useRef(null);
+  const canvasRef = useRef<PachinkoCanvasHandle>(null); // 👈 Add the type here
 
   const handleGenerate = () => {
     canvasRef.current?.regenerate();
   };
-  
+
   const visibleCanvasWidth = canvasRef.current?.getVisibleCanvasWidth?.() ?? 450;
 
   useEffect(() => {
@@ -25,7 +31,6 @@ const App = () => {
   return (
     <main className="p-4">
       <div className="w-full min-h-screen flex flex-col items-center justify-center">
-        {/* render the canvas*/}
         <PachinkoCanvas
           ref={canvasRef}
           onAnimationStart={() => setIsAnimating(true)}
