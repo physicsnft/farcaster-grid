@@ -40,7 +40,7 @@ export function CollectButton({
   const { writeContractAsync } = useWriteContract();
 
   const [isLoadingTxData, setIsLoadingTxData] = useState(false);
-  const [setIsConfirming] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
   const isPending = isLoadingTxData;
 
   const contractAddress: Address = contractConfig.address as Address;
@@ -100,7 +100,7 @@ export function CollectButton({
           address: contractAddress,
           abi: contractConfig.abi,
           functionName: "safeMint",
-          args: [address as Address, metadataUrl as unknown as `0x${string}`],
+          args: [address as Address, metadataUrl],
           value: parseEther("0.001"),
           chainId: contractConfig.chain.id,
         });
