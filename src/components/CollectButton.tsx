@@ -100,7 +100,7 @@ export function CollectButton({
           address: contractAddress,
           abi: contractConfig.abi,
           functionName: "safeMint",
-          args: [address as Address, metadataUrl as string],
+          args: [address as Address, metadataUrl as unknown as `0x${string}`],
           value: parseEther("0.001"),
           chainId: contractConfig.chain.id,
         });
