@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { sdk } from '@farcaster/frame-sdk';
-import { CollectButton, setHasMintedCurrentArtwork } from "./components/CollectButton";
+import { CollectButton } from "./components/CollectButton";
 import { Button } from "./components/Button";
-import { AnimatedBorder } from "./components/AnimatedBorder";
-import PachinkoCanvas from "./components/PachinkoCanvas";
+import GridCanvas from "./components/GridCanvas";
 
-// 👇 Add this interface
-type PachinkoCanvasHandle = {
+// interface
+type GridCanvasHandle = {
   regenerate: () => void;
   getVisibleCanvasWidth?: () => number;
 };
@@ -14,7 +13,7 @@ type PachinkoCanvasHandle = {
 const App = () => {
   const [hasMintedCurrentArtwork, setHasMintedCurrentArtwork] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const canvasRef = useRef<PachinkoCanvasHandle>(null); // 👈 Add the type here
+  const canvasRef = useRef<GridCanvasHandle>(null); 
 
   const handleGenerate = () => {
     canvasRef.current?.regenerate();
@@ -31,7 +30,7 @@ const App = () => {
   return (
     <main className="p-4">
       <div className="w-full min-h-screen flex flex-col items-center justify-center">
-        <PachinkoCanvas
+        <GridCanvas
           ref={canvasRef}
           onAnimationStart={() => setIsAnimating(true)}
           onAnimationEnd={() => setIsAnimating(false)}

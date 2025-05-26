@@ -40,7 +40,7 @@ export function CollectButton({
   const { writeContractAsync } = useWriteContract();
 
   const [isLoadingTxData, setIsLoadingTxData] = useState(false);
-  const [isConfirming, setIsConfirming] = useState(false);
+  const [setIsConfirming] = useState(false);
   const isPending = isLoadingTxData;
 
   const contractAddress: Address = contractConfig.address as Address;
@@ -62,7 +62,6 @@ export function CollectButton({
     abi: contractConfig.abi,
     functionName: "mintedPerAddress",
     args: address ? [address as Address] : [],
-    enabled: !!address,
   });
 
   const total = typeof totalMinted === "bigint" ? Number(totalMinted) : 0;
@@ -101,7 +100,7 @@ export function CollectButton({
           address: contractAddress,
           abi: contractConfig.abi,
           functionName: "safeMint",
-          args: [address as Address, metadataUrl],
+          args: [address as Address, metadataUrl as string],
           value: parseEther("0.001"),
           chainId: contractConfig.chain.id,
         });

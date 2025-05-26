@@ -51,12 +51,12 @@ type Point = {
   direction: number;
 };
 
-type PachinkoCanvasProps = {
+type GridCanvasProps = {
   onAnimationStart?: () => void;
   onAnimationEnd?: () => void;
 };
 
-const PachinkoCanvas: ForwardRefRenderFunction<any, PachinkoCanvasProps> = (
+const GridCanvas: ForwardRefRenderFunction<any, GridCanvasProps> = (
   { onAnimationStart, onAnimationEnd },
   ref
 ) => {
@@ -197,4 +197,4 @@ const PachinkoCanvas: ForwardRefRenderFunction<any, PachinkoCanvasProps> = (
   );
 };
 
-export default forwardRef(PachinkoCanvas);
+export default forwardRef(GridCanvas);
