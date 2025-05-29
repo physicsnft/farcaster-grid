@@ -34,7 +34,7 @@ export function CollectButton({
   isMinting,
   hasMintedCurrentArtwork,
   setHasMintedCurrentArtwork,
-  isAnimating
+  isAnimating,
 }: CollectButtonProps) {
   const { isConnected, address } = useAccount();
   const { connect } = useConnect();
@@ -112,7 +112,7 @@ export function CollectButton({
           const delay = 1500;
           for (let i = 1; i <= maxRetries; i++) {
             try {
-              return await publicClient.getTransactionReceipt({ hash: txHash });
+              return await publicClient.getTransactionReceipt({ hash: txHash as `0x${string}` });
             } catch {
               if (i === maxRetries) throw new Error("Transaction confirmation timeout");
               await new Promise((res) => setTimeout(res, delay));
@@ -122,28 +122,35 @@ export function CollectButton({
 
         console.log("✅ Mint sent. Waiting for confirmation...");
         const receipt = await waitWithRetry(txHash);
-        console.log("✅ Transaction confirmed:", receipt);
-        setHasMintedCurrentArtwork(true);
 
+        if (!receipt) {
+          throw new Error("Transaction receipt not found");
+        }
+
+        setHasMintedCurrentArtwork(true);
         await refetchTotal();
         await refetchMine();
-        
+
         const iface = new Interface(contractConfig.abi);
-        
+
         for (const log of receipt.logs) {
           try {
             const parsedLog = iface.parseLog(log);
-            if (parsedLog.name === "Transfer") {
-              const tokenId = parsedLog.args.tokenId.toString();
-              const nftUrl = `https://sepolia.basescan.org/nft/${contractAddress}/${tokenId}`;
-              console.log("Your NFT:", nftUrl);
+            if (parsedLog?.name === "Transfer") {
+              const tokenId = parsedLog.args?.tokenId?.toString();
+              if (tokenId) {
+                const nftUrl = `https://sepolia.basescan.org/nft/${contractAddress}/${tokenId}`;
+                console.log("Your NFT:", nftUrl);
+              }
               break;
             }
-          } catch (e) {}
+          } catch (e) {
+            // Skip unparseable logs
+          }
         }
 
         onCollect();
-      } catch (err) {
+      } catch (err: any) {
         console.error("❌ Mint failed:", err);
         const msg = err instanceof Error ? err.message : "Transaction failed";
         if (!isUserRejectionError(err)) onError(msg);
