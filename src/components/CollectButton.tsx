@@ -43,6 +43,7 @@ export function CollectButton({
   const { writeContractAsync } = useWriteContract();
 
   const [isLoadingTxData, setIsLoadingTxData] = useState(false);
+  const [mintedTokenId, setMintedTokenId] = useState<string | null>(null);
   const isPending = isLoadingTxData;
 
   const contractAddress: Address = contractConfig.address as Address;
@@ -123,9 +124,7 @@ export function CollectButton({
         console.log("✅ Mint sent. Waiting for confirmation...");
         const receipt = await waitWithRetry(txHash);
 
-        if (!receipt) {
-          throw new Error("Transaction receipt not found");
-        }
+        if (!receipt) throw new Error("Transaction receipt not found");
 
         setHasMintedCurrentArtwork(true);
         await refetchTotal();
@@ -139,13 +138,12 @@ export function CollectButton({
             if (parsedLog?.name === "Transfer") {
               const tokenId = parsedLog.args?.tokenId?.toString();
               if (tokenId) {
-                const nftUrl = `https://sepolia.basescan.org/nft/${contractAddress}/${tokenId}`;
-                console.log("Your NFT:", nftUrl);
+                setMintedTokenId(tokenId); // ✅ Trigger success popup
               }
               break;
             }
           } catch (e) {
-            // Skip unparseable logs
+            // skip unparseable logs
           }
         }
 
@@ -164,7 +162,7 @@ export function CollectButton({
   };
 
   return (
-    <div className="bg-card p-2">
+    <div className="bg-card p-2 relative">
       <div className="w-full max-w-md mx-auto">
         {mintLimitReached && (
           <p className="text-sm text-center text-red-500 mb-2">
@@ -214,6 +212,29 @@ export function CollectButton({
             Total: {total} of 1000 artworks minted
           </p>
         </div>
+
+        {/* ✅ Success Popup */}
+        {mintedTokenId && (
+          <div className="mt-4 p-4 border rounded bg-green-100 text-green-800 text-center relative">
+            <button
+              onClick={() => setMintedTokenId(null)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              ✕
+            </button>
+            <p className="mb-2 font-semibold">
+              GRID #{mintedTokenId} successfully minted 🎉
+            </p>
+            <a
+              href={`https://sepolia.basescan.org/nft/${contractAddress}/${mintedTokenId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+            >
+              Show NFT
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );
