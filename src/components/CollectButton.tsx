@@ -8,6 +8,7 @@ import {
   usePublicClient,
 } from "wagmi";
 import { parseEther } from "viem";
+import { Interface } from "ethers";
 
 import { contractConfig } from "../config";
 import { uploadImageAndMetadata, exportCanvasAsBlob } from "../utils/uploadToIPFS";
@@ -24,6 +25,7 @@ interface CollectButtonProps {
   isMinting: boolean;
   hasMintedCurrentArtwork: boolean;
   setHasMintedCurrentArtwork: (value: boolean) => void;
+  isAnimating: boolean;
 }
 
 export function CollectButton({
@@ -32,6 +34,7 @@ export function CollectButton({
   isMinting,
   hasMintedCurrentArtwork,
   setHasMintedCurrentArtwork,
+  isAnimating
 }: CollectButtonProps) {
   const { isConnected, address } = useAccount();
   const { connect } = useConnect();
@@ -40,7 +43,6 @@ export function CollectButton({
   const { writeContractAsync } = useWriteContract();
 
   const [isLoadingTxData, setIsLoadingTxData] = useState(false);
-  const [isConfirming, setIsConfirming] = useState(false);
   const isPending = isLoadingTxData;
 
   const contractAddress: Address = contractConfig.address as Address;
@@ -118,7 +120,6 @@ export function CollectButton({
           }
         };
 
-        setIsConfirming(true);
         console.log("✅ Mint sent. Waiting for confirmation...");
         const receipt = await waitWithRetry(txHash);
         console.log("✅ Transaction confirmed:", receipt);
@@ -126,9 +127,20 @@ export function CollectButton({
 
         await refetchTotal();
         await refetchMine();
-
-        const explorer = `https://base.testnet.thesuperscan.io/tx/${txHash}`;
-        console.log(`✅ View NFT: ${explorer}`);
+        
+        const iface = new Interface(contractConfig.abi);
+        
+        for (const log of receipt.logs) {
+          try {
+            const parsedLog = iface.parseLog(log);
+            if (parsedLog.name === "Transfer") {
+              const tokenId = parsedLog.args.tokenId.toString();
+              const nftUrl = `https://sepolia.basescan.org/nft/${contractAddress}/${tokenId}`;
+              console.log("Your NFT:", nftUrl);
+              break;
+            }
+          } catch (e) {}
+        }
 
         onCollect();
       } catch (err) {
@@ -136,7 +148,6 @@ export function CollectButton({
         const msg = err instanceof Error ? err.message : "Transaction failed";
         if (!isUserRejectionError(err)) onError(msg);
       } finally {
-        setIsConfirming(false);
         setIsLoadingTxData(false);
       }
     } catch (err) {
@@ -164,7 +175,7 @@ export function CollectButton({
           <Button
             className="w-full"
             onClick={handleClick}
-            disabled={isPending || mintLimitReached || hasMintedCurrentArtwork}
+            disabled={isPending || mintLimitReached || hasMintedCurrentArtwork || isAnimating}
           >
             {mintLimitReached
               ? "Limit Reached"

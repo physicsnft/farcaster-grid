@@ -13,13 +13,20 @@ type GridCanvasHandle = {
 const App = () => {
   const [hasMintedCurrentArtwork, setHasMintedCurrentArtwork] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [visibleCanvasWidth, setVisibleCanvasWidth] = useState(450);
   const canvasRef = useRef<GridCanvasHandle>(null); 
 
   const handleGenerate = () => {
     canvasRef.current?.regenerate();
+    setHasMintedCurrentArtwork(false); // reset mint state on new generation
   };
 
-  const visibleCanvasWidth = canvasRef.current?.getVisibleCanvasWidth?.() ?? 450;
+  // move width logic out of render phase
+  useEffect(() => {
+    if (canvasRef.current?.getVisibleCanvasWidth) {
+      setVisibleCanvasWidth(canvasRef.current.getVisibleCanvasWidth());
+    }
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -58,6 +65,7 @@ const App = () => {
             onError={(err) => console.error("Mint failed", err)}
             hasMintedCurrentArtwork={hasMintedCurrentArtwork}
             setHasMintedCurrentArtwork={setHasMintedCurrentArtwork}
+            isAnimating={isAnimating}
           />
         </div>
       </div>

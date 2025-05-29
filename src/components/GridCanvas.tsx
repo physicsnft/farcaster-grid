@@ -135,7 +135,10 @@ const GridCanvas: ForwardRefRenderFunction<any, GridCanvasProps> = (
   };
 
   useEffect(() => {
-    regenerate();
+    const id = requestAnimationFrame(() => {
+      regenerate();
+    });
+    return () => cancelAnimationFrame(id);
   }, []);
 
   useEffect(() => {
