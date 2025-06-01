@@ -16,6 +16,7 @@ import { Button } from "./Button";
 import { AnimatedBorder } from "./AnimatedBorder";
 import { isUserRejectionError } from "../lib/errors";
 import { injected } from "wagmi/connectors";
+import { sdk } from '@farcaster/frame-sdk';
 
 type Address = `0x${string}`;
 
@@ -44,6 +45,7 @@ export function CollectButton({
 
   const [isLoadingTxData, setIsLoadingTxData] = useState(false);
   const [mintedTokenId, setMintedTokenId] = useState<string | null>(null);
+  const [mintedImageUri, setMintedImageUri] = useState<string | null>(null);
   const isPending = isLoadingTxData;
 
   const contractAddress: Address = contractConfig.address as Address;
@@ -96,14 +98,16 @@ export function CollectButton({
 
       try {
         const blob = await exportCanvasAsBlob(canvas);
-        const metadataUrl = await uploadImageAndMetadata(blob);
-        console.log("✅ Metadata uploaded:", metadataUrl);
+        const { metadataUri, imageUri } = await uploadImageAndMetadata(blob);
+        setMintedImageUri(imageUri);
+
+        console.log("✅ Metadata uploaded:", metadataUri);
 
         const txHash = await writeContractAsync({
           address: contractAddress,
           abi: contractConfig.abi,
           functionName: "safeMint",
-          args: [address as Address, metadataUrl],
+          args: [address as Address, metadataUri],
           value: parseEther("0.001"),
           chainId: contractConfig.chain.id,
         });
@@ -138,7 +142,7 @@ export function CollectButton({
             if (parsedLog?.name === "Transfer") {
               const tokenId = parsedLog.args?.tokenId?.toString();
               if (tokenId) {
-                setMintedTokenId(tokenId); // ✅ Trigger success popup
+                setMintedTokenId(tokenId);
               }
               break;
             }
@@ -158,6 +162,24 @@ export function CollectButton({
     } catch (err) {
       onError("Something unexpected went wrong.");
       setIsLoadingTxData(false);
+    }
+  };
+  
+  const handleShare = async () => {
+    if (!mintedTokenId || !mintedImageUri) return;
+
+    const nftUrl = `https://sepolia.basescan.org/nft/${contractAddress}/${mintedTokenId}`;
+    const message = `I'm part of the G R I D! 🎉\n\n${nftUrl}`;
+
+    try {
+      await sdk.actions.postCast({
+        text: message,
+        embeds: [mintedImageUri],
+      });
+      alert("✅ Shared to Farcaster!");
+    } catch (error) {
+      console.error("❌ Share failed:", error);
+      alert("Failed to share on Farcaster.");
     }
   };
 
@@ -225,14 +247,22 @@ export function CollectButton({
             <p className="mb-2 font-semibold">
               GRID #{mintedTokenId} successfully minted 🎉
             </p>
-            <a
-              href={`https://sepolia.basescan.org/nft/${contractAddress}/${mintedTokenId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
-            >
-              Show NFT
-            </a>
+            <div className="flex justify-center gap-4 mt-3">
+              <a
+                href={`https://sepolia.basescan.org/nft/${contractAddress}/${mintedTokenId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+              >
+                Show
+              </a>
+              <button
+                onClick={handleShare}
+                className="inline-block px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
+              >
+                Share
+              </button>
+            </div>
           </div>
         )}
       </div>

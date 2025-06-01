@@ -26,10 +26,13 @@ export function exportCanvasAsBlob(canvas: HTMLCanvasElement, scale = 1): Promis
   });
 }
 
-export async function uploadImageAndMetadata(blob: Blob): Promise<string> {
+export async function uploadImageAndMetadata(blob: Blob): Promise<{
+  metadataUri: string;
+  imageUri: string;
+}> {
   try {
     // Use a File directly instead of Buffer
-    const file = new File([blob], "walk.png", { type: "image/png" });
+    const file = new File([blob], "grid.png", { type: "image/png" });
 
     // Upload image to IPFS
     const imageUri = await storage.upload(file, {
@@ -39,7 +42,7 @@ export async function uploadImageAndMetadata(blob: Blob): Promise<string> {
 
     // Create metadata
     const metadata = {
-      name: "Random Walk NFT",
+      name: "G R I D",
       description: "A unique generative art piece.",
       image: imageUri,
     };
@@ -47,7 +50,7 @@ export async function uploadImageAndMetadata(blob: Blob): Promise<string> {
     const metadataUri = await storage.upload(metadata);
     console.log("Uploaded metadata:", metadataUri);
 
-    return metadataUri;
+    return { metadataUri, imageUri };
   } catch (err) {
     console.error("Failed to upload to Thirdweb storage:", err);
     throw err;
